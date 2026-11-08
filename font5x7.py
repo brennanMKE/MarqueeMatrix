@@ -1,9 +1,11 @@
-"""5x7 marquee font: A-Z for a 5-wide x 7-tall grid of bulbs.
+"""5x7 marquee font: A-Z, 0-9, dash and colon for a 5-wide x 7-tall grid of bulbs.
+
+Zero has a slash so it reads differently from O.
 
 Each glyph is 7 rows of 5 characters, top row first; '#' = bulb on.
 Bulb index = row * 5 + col (0 = top-left, 34 = bottom-right).
 
-Run `python3 font5x7.py` to print a preview and per-letter bulb counts.
+Run `python3 font5x7.py` to print a preview and per-glyph bulb counts.
 """
 
 COLS, ROWS = 5, 7
@@ -35,6 +37,18 @@ GLYPHS = {
     "X": ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
     "Y": ["#...#", "#...#", "#...#", ".#.#.", "..#..", "..#..", "..#.."],
     "Z": ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
+    "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
+    "1": ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."],
+    "2": [".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"],
+    "3": ["#####", "...#.", "..#..", "...#.", "....#", "#...#", ".###."],
+    "4": ["...#.", "..##.", ".#.#.", "#..#.", "#####", "...#.", "...#."],
+    "5": ["#####", "#....", "####.", "....#", "....#", "#...#", ".###."],
+    "6": ["..##.", ".#...", "#....", "####.", "#...#", "#...#", ".###."],
+    "7": ["#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."],
+    "8": [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
+    "9": [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
+    "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
+    ":": [".....", ".....", "..#..", ".....", "..#..", ".....", "....."],
     " ": ["....."] * 7,
 }
 
@@ -61,5 +75,5 @@ if __name__ == "__main__":
             print("   ".join(GLYPHS[c][r].replace("#", "●").replace(".", "·") for c in group))
         print()
     counts = {c: len(bulbs_on(c)) for c in letters}
-    print("bulbs lit per letter:", " ".join(f"{c}{n}" for c, n in counts.items()))
+    print("bulbs lit per glyph:", " ".join(f"{c}:{n}" for c, n in counts.items()))
     print(f"max {max(counts.values())} ({max(counts, key=counts.get)}), min {min(counts.values())} ({min(counts, key=counts.get)})")

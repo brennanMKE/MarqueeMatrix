@@ -1,4 +1,7 @@
-"""Render docs/marquee.png: seven signs side by side spelling a word, drawn to scale.
+"""Render the README images, drawn to scale from font5x7.py and the box dimensions.
+
+  docs/marquee.png  one row of signs spelling WORD (default MARQUEE)
+  docs/font.png     every glyph (A-Z, 0-9, dash, colon), nine signs per row
 
 uv run --python 3.12 --with pillow cad/render_banner.py [WORD]
 """
@@ -9,7 +12,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from font5x7 import COLS, ROWS, bulbs_on  # noqa: E402
+from font5x7 import COLS, GLYPHS, ROWS, bulbs_on  # noqa: E402
 
 # same geometry as cad/marquee_matrix.py (mm)
 PITCH, EDGE, GLOBE_D = 60.0, 48.0, 40.0
@@ -30,17 +33,18 @@ ON_RIM = (255, 196, 99)
 GLOW = (255, 170, 60)
 
 
-def render(word: str) -> Image.Image:
+def render(word: str, per_row: int = 0) -> Image.Image:
     pw, ph = round(W * S), round(H * S)
-    n = len(word)
-    size = (2 * MARGIN + n * pw + (n - 1) * GAP + SIDE, 2 * MARGIN + ph + SIDE)
+    n = per_row or len(word)
+    rows = -(-len(word) // n)
+    size = (2 * MARGIN + n * pw + (n - 1) * GAP + SIDE, 2 * MARGIN + rows * ph + (rows - 1) * GAP + SIDE)
     base = Image.new("RGB", size, BG)
     glow = Image.new("RGB", size, (0, 0, 0))
     d, g = ImageDraw.Draw(base), ImageDraw.Draw(glow)
     r = GLOBE_D / 2 * S
 
     for k, ch in enumerate(word):
-        x0, y0 = MARGIN + k * (pw + GAP), MARGIN
+        x0, y0 = MARGIN + (k % n) * (pw + GAP), MARGIN + (k // n) * (ph + GAP)
         d.rectangle([x0 + SIDE, y0 + SIDE, x0 + pw + SIDE, y0 + ph + SIDE], fill=WOOD)
         d.rectangle([x0, y0, x0 + pw, y0 + ph], fill=ACRYLIC)
         lit = set(bulbs_on(ch))
@@ -63,7 +67,9 @@ def render(word: str) -> Image.Image:
 
 if __name__ == "__main__":
     word = (sys.argv[1] if len(sys.argv) > 1 else "MARQUEE").upper()
-    out = ROOT / "docs" / "marquee.png"
-    out.parent.mkdir(exist_ok=True)
-    render(word).save(out, optimize=True)
-    print(out)
+    docs = ROOT / "docs"
+    docs.mkdir(exist_ok=True)
+    render(word).save(docs / "marquee.png", optimize=True)
+    glyphs = "".join(c for c in GLYPHS if c != " ")
+    render(glyphs, per_row=9).save(docs / "font.png", optimize=True)
+    print(docs / "marquee.png", docs / "font.png")

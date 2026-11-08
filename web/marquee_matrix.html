@@ -178,7 +178,7 @@ code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere;
   <header class="head">
     <span class="eyebrow">5 × 7 · 35 bulbs · 120 V</span>
     <h1>MarqueeMatrix</h1>
-    <p class="lede">A wall sign that spells one letter at a time on a grid of marquee bulbs. Black acrylic face, wood box, ESP32-C3 hidden in the back.</p>
+    <p class="lede">A wall sign that spells one letter or digit at a time on a grid of marquee bulbs. Black acrylic face, wood box, ESP32-C3 hidden in the back.</p>
   </header>
 
   <div class="hero">
@@ -196,6 +196,7 @@ code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere;
         <span class="label" id="mode-label">Pattern</span>
         <div class="seg" role="group" aria-labelledby="mode-label" id="modes">
           <button type="button" data-mode="spell" aria-pressed="true">Spell</button>
+          <button type="button" data-mode="count" aria-pressed="false">Count</button>
           <button type="button" data-mode="chase" aria-pressed="false">Chase</button>
           <button type="button" data-mode="border" aria-pressed="false">Border</button>
           <button type="button" data-mode="all" aria-pressed="false">All on</button>
@@ -210,16 +211,21 @@ code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere;
         <div class="stat"><span class="v" id="s-lit">18</span><span class="k">bulbs lit</span></div>
         <div class="stat"><span class="v" id="s-load">18 W</span><span class="k">at 1 W per bulb</span></div>
       </div>
-      <p class="muted" style="font-size:15px">On/off only. Each bulb has its own solid-state relay channel, so any pattern is possible. Click a bulb to toggle it by hand.</p>
+      <p class="muted" style="font-size:15px">On/off only. Each bulb has its own solid-state relay channel, so any pattern is possible. Spell takes letters, digits, dash and colon; Count runs 9 down to 0. Click a bulb to toggle it by hand.</p>
     </div>
   </div>
 
   <section>
     <div class="head">
       <h2>The font</h2>
-      <p class="muted">The classic 5 × 7 dot-matrix alphabet. Bulb number = row × 5 + column, counting from 0 at the top left. Each letter lights between 11 bulbs (I, J, L, T, Y) and 20 (B). Click a letter to hold it on the sign.</p>
+      <p class="muted">The classic 5 × 7 dot-matrix letters and digits, plus a dash and a colon for times and scores like 12:30 or 3-1. Zero has a slash so it reads differently from O. Bulb number = row × 5 + column, counting from 0 at the top left. Letters and digits light between 10 bulbs (1) and 20 (B). Click one to hold it on the sign.</p>
     </div>
-    <div class="font-grid" id="font"></div>
+    <h3>Letters</h3>
+    <div class="font-grid" id="font-letters"></div>
+    <h3>Digits</h3>
+    <div class="font-grid" id="font-digits"></div>
+    <h3>Symbols</h3>
+    <div class="font-grid" id="font-symbols"></div>
   </section>
 
   <section>
@@ -307,7 +313,7 @@ code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere;
   <section>
     <div class="head"><h2>Files</h2><p class="muted">In the MarqueeMatrix project folder.</p></div>
     <div class="files">
-      <div><code>font5x7.py</code><span class="muted">The A–Z glyphs used on this page</span></div>
+      <div><code>font5x7.py</code><span class="muted">The glyphs used on this page: A–Z, 0–9, dash and colon</span></div>
       <div><code>cad/marquee_matrix.py</code><span class="muted">Parametric build123d model; all dimensions at the top</span></div>
       <div><code>cad/export.py</code><span class="muted">Writes the STEP file and laser cut files</span></div>
       <div><code>out/marquee_matrix.step</code><span class="muted">Full assembly</span></div>
@@ -317,7 +323,7 @@ code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere;
 </div>
 
 <script>
-const FONT = {"A":[".###.","#...#","#...#","#####","#...#","#...#","#...#"],"B":["####.","#...#","#...#","####.","#...#","#...#","####."],"C":[".###.","#...#","#....","#....","#....","#...#",".###."],"D":["###..","#..#.","#...#","#...#","#...#","#..#.","###.."],"E":["#####","#....","#....","####.","#....","#....","#####"],"F":["#####","#....","#....","####.","#....","#....","#...."],"G":[".###.","#...#","#....","#.###","#...#","#...#",".####"],"H":["#...#","#...#","#...#","#####","#...#","#...#","#...#"],"I":[".###.","..#..","..#..","..#..","..#..","..#..",".###."],"J":["..###","...#.","...#.","...#.","...#.","#..#.",".##.."],"K":["#...#","#..#.","#.#..","##...","#.#..","#..#.","#...#"],"L":["#....","#....","#....","#....","#....","#....","#####"],"M":["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#"],"N":["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#"],"O":[".###.","#...#","#...#","#...#","#...#","#...#",".###."],"P":["####.","#...#","#...#","####.","#....","#....","#...."],"Q":[".###.","#...#","#...#","#...#","#.#.#","#..#.",".##.#"],"R":["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],"S":[".####","#....","#....",".###.","....#","....#","####."],"T":["#####","..#..","..#..","..#..","..#..","..#..","..#.."],"U":["#...#","#...#","#...#","#...#","#...#","#...#",".###."],"V":["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],"W":["#...#","#...#","#...#","#.#.#","#.#.#","#.#.#",".#.#."],"X":["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#"],"Y":["#...#","#...#","#...#",".#.#.","..#..","..#..","..#.."],"Z":["#####","....#","...#.","..#..",".#...","#....","#####"]};
+const FONT = {"A":[".###.","#...#","#...#","#####","#...#","#...#","#...#"],"B":["####.","#...#","#...#","####.","#...#","#...#","####."],"C":[".###.","#...#","#....","#....","#....","#...#",".###."],"D":["###..","#..#.","#...#","#...#","#...#","#..#.","###.."],"E":["#####","#....","#....","####.","#....","#....","#####"],"F":["#####","#....","#....","####.","#....","#....","#...."],"G":[".###.","#...#","#....","#.###","#...#","#...#",".####"],"H":["#...#","#...#","#...#","#####","#...#","#...#","#...#"],"I":[".###.","..#..","..#..","..#..","..#..","..#..",".###."],"J":["..###","...#.","...#.","...#.","...#.","#..#.",".##.."],"K":["#...#","#..#.","#.#..","##...","#.#..","#..#.","#...#"],"L":["#....","#....","#....","#....","#....","#....","#####"],"M":["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#"],"N":["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#"],"O":[".###.","#...#","#...#","#...#","#...#","#...#",".###."],"P":["####.","#...#","#...#","####.","#....","#....","#...."],"Q":[".###.","#...#","#...#","#...#","#.#.#","#..#.",".##.#"],"R":["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],"S":[".####","#....","#....",".###.","....#","....#","####."],"T":["#####","..#..","..#..","..#..","..#..","..#..","..#.."],"U":["#...#","#...#","#...#","#...#","#...#","#...#",".###."],"V":["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],"W":["#...#","#...#","#...#","#.#.#","#.#.#","#.#.#",".#.#."],"X":["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#"],"Y":["#...#","#...#","#...#",".#.#.","..#..","..#..","..#.."],"Z":["#####","....#","...#.","..#..",".#...","#....","#####"],"0":[".###.","#...#","#..##","#.#.#","##..#","#...#",".###."],"1":["..#..",".##..","..#..","..#..","..#..","..#..",".###."],"2":[".###.","#...#","....#","...#.","..#..",".#...","#####"],"3":["#####","...#.","..#..","...#.","....#","#...#",".###."],"4":["...#.","..##.",".#.#.","#..#.","#####","...#.","...#."],"5":["#####","#....","####.","....#","....#","#...#",".###."],"6":["..##.",".#...","#....","####.","#...#","#...#",".###."],"7":["#####","....#","...#.","..#..",".#...",".#...",".#..."],"8":[".###.","#...#","#...#",".###.","#...#","#...#",".###."],"9":[".###.","#...#","#...#",".####","....#","...#.",".##.."],"-":[".....",".....",".....","#####",".....",".....","....."],":":[".....",".....","..#..",".....","..#..",".....","....."]};
 const COLS = 5, ROWS = 7, PITCH = 60, EDGE = 48, W = 336, H = 456;
 const N = COLS * ROWS;
 
@@ -377,7 +383,7 @@ const perimeter = (() => {
 })();
 
 function letters() {
-  const w = wordInput.value.toUpperCase().replace(/[^A-Z ]/g, "");
+  const w = wordInput.value.toUpperCase().replace(/[^A-Z0-9:\- ]/g, "");
   return w.length ? [...w] : ["A"];
 }
 function tick() {
@@ -393,6 +399,14 @@ function tick() {
     step++;
     const isGap = !ch;
     timer = setTimeout(tick, isGap ? Math.max(120, speed.value * 0.3) : +speed.value);
+  } else if (mode === "count") {
+    // countdown 9 to 0, then a pause
+    const slots = [..."9876543210", "", ""];
+    const ch = slots[step % slots.length];
+    show(ch ? glyphBits(ch) : new Set());
+    stats(ch || "–");
+    step++;
+    timer = setTimeout(tick, +speed.value);
   } else if (mode === "chase") {
     const on = new Set();
     for (let i = 0; i < N; i++) if (i % 3 === step % 3) on.add(i);
@@ -421,7 +435,9 @@ wordInput.addEventListener("input", () => start("spell"));
 speed.addEventListener("input", () => { document.getElementById("speed-v").textContent = speed.value + " ms"; });
 
 // ---------- font sheet ----------
-const fontEl = document.getElementById("font");
+const fontLetters = document.getElementById("font-letters");
+const fontDigits = document.getElementById("font-digits");
+const fontSymbols = document.getElementById("font-symbols");
 Object.keys(FONT).forEach(ch => {
   const g = document.createElement("button");
   g.type = "button"; g.className = "glyph"; g.setAttribute("aria-pressed", "false");
@@ -436,7 +452,7 @@ Object.keys(FONT).forEach(ch => {
     g.setAttribute("aria-pressed", "true");
     show(bits); stats(ch);
   });
-  fontEl.appendChild(g);
+  (/[A-Z]/.test(ch) ? fontLetters : /[0-9]/.test(ch) ? fontDigits : fontSymbols).appendChild(g);
 });
 
 // ---------- section drawing (to scale: 3 px/mm; z = 0 at the face front, +z toward the viewer) ----------
