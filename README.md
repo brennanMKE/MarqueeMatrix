@@ -2,7 +2,7 @@
 
 ![Seven MarqueeMatrix signs spelling MARQUEE](docs/marquee.png)
 
-A 5 × 7 grid of 120 V G40 marquee bulbs that spells one character at a time (A–Z, 0–9, dash and colon), in a wood box with the electronics hidden in the back.
+A 5 × 7 grid of 120 V G40 marquee bulbs that spells one character at a time (A–Z, 0–9, `- : ! ? . '` and ← →), in a wood box with the electronics hidden in the back.
 
 | | |
 |---|---|
@@ -13,18 +13,18 @@ A 5 × 7 grid of 120 V G40 marquee bulbs that spells one character at a time (A�
 | Control | ESP32-C3 → 5 × 74HCT595 (daisy-chained, 3 GPIO) → 5 × 8-ch SSR boards (40 channels), on/off only |
 | Power | Cord through a PG7 gland in the bottom wall → fused terminal block; 120 V → 5 V module for the logic |
 
-**Open the live page:** https://claude.ai/artifact/27NbX2izJUi5tEKZeaorrt (source in `web/marquee_matrix.html`). It previews the sign (spell letters, digits, dash and colon, or count down 9 to 0), the font, the box section, the electronics and the parts list.
+**Open the live page:** https://claude.ai/artifact/27NbX2izJUi5tEKZeaorrt (source in `web/marquee_matrix.html`). It previews the sign (spell text with letters, digits, symbols and arrows, or count down 9 to 0), the font, the box section, the electronics and the parts list.
 
 ## Font
 
-![All 38 characters: A–Z, 0–9, dash and colon](docs/font.png)
+![All 44 characters: A–Z, 0–9, symbols and arrows](docs/font.png)
 
-`font5x7.py` holds the 26 capital letters, the digits 0–9, a dash and a colon in the classic 5 × 7 dot-matrix style, so the sign can show times and scores such as 12:30 or 3-1 one character at a time. The zero has a slash so it reads differently from O. Letters and digits light between 10 bulbs (1) and 20 (B); the dash lights 5 and the colon 2. Bulb number = row × 5 + column, counting from 0 at the top left; bulb *n* is on SSR board ⌊*n* ÷ 8⌋, channel *n* mod 8.
+`font5x7.py` holds the 26 capital letters, the digits 0–9, `- : ! ? . '` and left and right arrows in the classic 5 × 7 dot-matrix style, so the sign can show times, scores and short messages such as 12:30, 3-1 or OPEN! one character at a time. In text, type `->` and `<-` for the arrows; `font5x7.glyphs()` does the conversion. The zero has a slash so it reads differently from O. Letters and digits light between 10 bulbs (1) and 20 (B); symbols light between 1 (.) and 9 (? and the arrows). Bulb number = row × 5 + column, counting from 0 at the top left; bulb *n* is on SSR board ⌊*n* ÷ 8⌋, channel *n* mod 8.
 
 ## Repository layout
 
 ```
-font5x7.py              A–Z, 0–9, dash and colon (slashed zero); bulb index = row * 5 + col (0 = top-left). `python3 font5x7.py` previews them.
+font5x7.py              A–Z, 0–9, symbols and arrows (slashed zero); bulb index = row * 5 + col (0 = top-left). `python3 font5x7.py` previews them.
 cad/
   marquee_matrix.py     parametric model (build123d); all dimensions at the top
   export.py             writes everything in fab/

@@ -1,7 +1,7 @@
 """Render the README images, drawn to scale from font5x7.py and the box dimensions.
 
   docs/marquee.png  one row of signs spelling WORD (default MARQUEE)
-  docs/font.png     every glyph (A-Z, 0-9, dash, colon), nine signs per row
+  docs/font.png     every glyph (A-Z, 0-9, symbols, arrows), nine signs per row
 
 uv run --python 3.12 --with pillow cad/render_banner.py [WORD]
 """

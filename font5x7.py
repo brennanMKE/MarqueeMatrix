@@ -1,6 +1,7 @@
-"""5x7 marquee font: A-Z, 0-9, dash and colon for a 5-wide x 7-tall grid of bulbs.
+"""5x7 marquee font: A-Z, 0-9, - : ! ? . ' and two arrows for a 5-wide x 7-tall grid of bulbs.
 
-Zero has a slash so it reads differently from O.
+Zero has a slash so it reads differently from O. In text, type -> and <- for the arrows
+(see glyphs()).
 
 Each glyph is 7 rows of 5 characters, top row first; '#' = bulb on.
 Bulb index = row * 5 + col (0 = top-left, 34 = bottom-right).
@@ -49,8 +50,26 @@ GLYPHS = {
     "9": [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
     "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
     ":": [".....", ".....", "..#..", ".....", "..#..", ".....", "....."],
+    "!": ["..#..", "..#..", "..#..", "..#..", "..#..", ".....", "..#.."],
+    "?": [".###.", "#...#", "....#", "...#.", "..#..", ".....", "..#.."],
+    ".": [".....", ".....", ".....", ".....", ".....", ".....", "..#.."],
+    "'": ["..#..", "..#..", ".#...", ".....", ".....", ".....", "....."],
+    "→": [".....", "..#..", "...#.", "#####", "...#.", "..#..", "....."],
+    "←": [".....", "..#..", ".#...", "#####", ".#...", "..#..", "....."],
     " ": ["....."] * 7,
 }
+
+
+ARROWS = {"->": "→", "<-": "←"}
+
+
+def glyphs(text: str) -> list[str]:
+    """Split text into displayable glyphs: upper-cases it, turns -> and <- into arrows,
+    and drops anything the font doesn't have."""
+    t = text.upper()
+    for k, v in ARROWS.items():
+        t = t.replace(k, v)
+    return [c for c in t if c in GLYPHS]
 
 
 def bulbs_on(ch: str) -> list[int]:
