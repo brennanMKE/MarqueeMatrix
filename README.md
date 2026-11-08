@@ -1,5 +1,7 @@
 # MarqueeMatrix
 
+![Seven MarqueeMatrix signs spelling MARQUEE](docs/marquee.png)
+
 A 5 × 7 grid of 120 V G40 marquee bulbs that spells one letter at a time (A–Z), in a wood box with the electronics hidden in the back.
 
 | | |
@@ -20,10 +22,12 @@ font5x7.py              A–Z glyphs; bulb index = row * 5 + col (0 = top-left).
 cad/
   marquee_matrix.py     parametric model (build123d); all dimensions at the top
   export.py             writes everything in fab/
+  render_banner.py      draws docs/marquee.png (`uv run --python 3.12 --with pillow cad/render_banner.py [WORD]`)
 fab/                    versioned deliverables (generated; commit with the model change that made them)
   marquee_matrix.step   full assembly, every part labelled (Git LFS)
   cut/face.dxf|svg      6 mm black acrylic face (xTool P2)
   cut/carrier.dxf|svg   6 mm acrylic carrier (xTool P2)
+docs/marquee.png        README image, drawn to scale from the font and box dimensions
 web/marquee_matrix.html the shareable page (artifact source)
 out/                    scratch, git-ignored
 ```
