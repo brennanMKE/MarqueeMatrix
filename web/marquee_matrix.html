@@ -1,0 +1,521 @@
+<title>MarqueeMatrix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a workshop build sheet. The lit sign is the hero beside its controls; the build details follow in one reading column. */
+:root {
+  --bg: #eef0f0;
+  --surface: #ffffff;
+  --fg: #1c2124;
+  --muted: #5a646a;
+  --line: #d3d9db;
+  --accent: #a8600c;          /* bulb amber, darkened for text on light */
+  --accent-soft: #f6e6cf;
+  --warn: #9b2c1f;
+  --acrylic: #0c0d0e;         /* the sign itself keeps one look in both themes */
+  --bulb-off: #26231f;
+  --bulb-off-hi: #3a352e;
+  --bulb-on: #fff4d6;
+  --bulb-glow: #ffbf55;
+  --wood: #9a6a3f;
+  --wood-dark: #6e4524;
+  --ply: #c9a878;
+  --metal: #8f979c;
+  --font-display: "Limelight", "Didot", Georgia, serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131618; --surface: #1b1f22; --fg: #e5e9eb; --muted: #9aa5ab; --line: #2c3337;
+    --accent: #f0a845; --accent-soft: #3a2a14; --warn: #f08a7a;
+    --acrylic: #050606; --bulb-off: #1f1c19; --bulb-off-hi: #2f2a24;
+    --wood: #8a5d36; --wood-dark: #5c3a1d; --ply: #a88a60; --metal: #79828a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131618; --surface: #1b1f22; --fg: #e5e9eb; --muted: #9aa5ab; --line: #2c3337;
+  --accent: #f0a845; --accent-soft: #3a2a14; --warn: #f08a7a;
+  --acrylic: #050606; --bulb-off: #1f1c19; --bulb-off-hi: #2f2a24;
+  --wood: #8a5d36; --wood-dark: #5c3a1d; --ply: #a88a60; --metal: #79828a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, 7vw, 64px); line-height: 1; letter-spacing: 0.02em; }
+h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+section { display: flex; flex-direction: column; gap: 18px; }
+.head { display: flex; flex-direction: column; gap: 12px; }
+.lede { font-size: 18px; color: var(--muted); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+.sign-col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.sign {
+  position: relative; width: 100%; max-width: 360px; aspect-ratio: 336 / 456;
+  background: var(--acrylic);
+  box-shadow: 10px 10px 0 -2px var(--wood-dark), 0 22px 40px -18px rgba(0,0,0,.55);
+  border-radius: 2px;
+}
+.bulb {
+  position: absolute; width: calc(40 / 336 * 100%); aspect-ratio: 1; border-radius: 50%;
+  transform: translate(-50%, -50%); border: 0; padding: 0; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, var(--bulb-off-hi), var(--bulb-off) 65%);
+  transition: background 120ms ease-out, box-shadow 120ms ease-out;
+}
+.bulb.on {
+  background: radial-gradient(circle at 40% 35%, #ffffff 0, var(--bulb-on) 35%, var(--bulb-glow) 100%);
+  box-shadow: 0 0 10px 3px rgba(255, 190, 80, .55), 0 0 28px 8px rgba(255, 170, 50, .25);
+}
+.bulb:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.readout { font-family: var(--font-mono); font-size: 13px; color: var(--muted); min-height: 1.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--fg); font-weight: 500; }
+
+.panel { display: flex; flex-direction: column; gap: 22px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field label, .label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+input[type="text"] {
+  font: 500 20px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 10px 12px; width: 100%; max-width: 360px;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+}
+input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="range"] { width: 100%; max-width: 360px; accent-color: var(--accent); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button {
+  font: 500 14px var(--font-body); padding: 8px 14px; border: 0; background: transparent; color: var(--fg); cursor: pointer;
+  border-right: 1px solid var(--line);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat .v { font: 500 22px var(--font-mono); font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 12px; color: var(--muted); }
+
+/* ---------- font sheet ---------- */
+.font-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
+.glyph {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--fg);
+  font: 500 12px var(--font-mono);
+}
+.glyph:hover { border-color: var(--accent); }
+.glyph[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.glyph:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mini { display: grid; grid-template-columns: repeat(5, 6px); gap: 2px; padding: 5px; background: var(--acrylic); border-radius: 2px; }
+.mini i { width: 6px; height: 6px; border-radius: 50%; background: var(--bulb-off-hi); }
+.mini i.on { background: var(--bulb-glow); box-shadow: 0 0 3px rgba(255,190,80,.8); }
+
+/* ---------- tables ---------- */
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { white-space: nowrap; }
+
+/* ---------- section drawing ---------- */
+.figure { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.figure svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.cap { font-size: 14px; color: var(--muted); }
+svg text { font-family: var(--font-mono); font-size: 12px; fill: var(--fg); }
+svg .lbl-muted { fill: var(--muted); }
+svg .acr { fill: var(--acrylic); }
+svg .acr-clear { fill: var(--line); stroke: var(--muted); stroke-width: .6; }
+svg .wood { fill: var(--wood); }
+svg .ply { fill: var(--ply); }
+svg .metal { fill: var(--metal); }
+svg .sock { fill: var(--muted); }
+svg .glow { fill: var(--bulb-on); stroke: var(--bulb-glow); stroke-width: 1.5; }
+svg .env { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 5 4; }
+svg .dim { stroke: var(--muted); stroke-width: 1; fill: none; }
+svg .lead { stroke: var(--muted); stroke-width: .8; fill: none; }
+
+/* ---------- signal chain ---------- */
+.chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.node { flex: 1 1 150px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.node .t { font-weight: 600; }
+.node .d { font-size: 14px; color: var(--muted); }
+.node.mains { border-color: var(--warn); }
+.node.mains .t { color: var(--warn); }
+.arrow { align-self: center; color: var(--muted); font-family: var(--font-mono); }
+@media (max-width: 640px) { .arrow { display: none; } }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.note p { font-size: 15px; color: var(--muted); }
+.note.warn { border-left: 3px solid var(--warn); }
+code { font-family: var(--font-mono); font-size: 0.9em; overflow-wrap: anywhere; }
+.files { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.files div { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .files div { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+
+@media (prefers-reduced-motion: reduce) { .bulb { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <span class="eyebrow">5 × 7 · 35 bulbs · 120 V</span>
+    <h1>MarqueeMatrix</h1>
+    <p class="lede">A wall sign that spells one letter at a time on a grid of marquee bulbs. Black acrylic face, wood box, ESP32-C3 hidden in the back.</p>
+  </header>
+
+  <div class="hero">
+    <div class="sign-col">
+      <div class="sign" id="sign" role="img" aria-label="5 by 7 bulb grid"></div>
+      <div class="readout" id="readout">Hover a bulb to see its channel</div>
+    </div>
+
+    <div class="panel">
+      <div class="field">
+        <label for="word">Spell</label>
+        <input type="text" id="word" value="MARQUEE" maxlength="24" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <span class="label" id="mode-label">Pattern</span>
+        <div class="seg" role="group" aria-labelledby="mode-label" id="modes">
+          <button type="button" data-mode="spell" aria-pressed="true">Spell</button>
+          <button type="button" data-mode="chase" aria-pressed="false">Chase</button>
+          <button type="button" data-mode="border" aria-pressed="false">Border</button>
+          <button type="button" data-mode="all" aria-pressed="false">All on</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="speed">Letter time <span class="mono" id="speed-v">700 ms</span></label>
+        <input type="range" id="speed" min="250" max="1500" step="50" value="700">
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="v" id="s-letter">M</span><span class="k">showing</span></div>
+        <div class="stat"><span class="v" id="s-lit">18</span><span class="k">bulbs lit</span></div>
+        <div class="stat"><span class="v" id="s-load">18 W</span><span class="k">at 1 W per bulb</span></div>
+      </div>
+      <p class="muted" style="font-size:15px">On/off only. Each bulb has its own solid-state relay channel, so any pattern is possible. Click a bulb to toggle it by hand.</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="head">
+      <h2>The font</h2>
+      <p class="muted">The classic 5 × 7 dot-matrix alphabet. Bulb number = row × 5 + column, counting from 0 at the top left. Each letter lights between 11 bulbs (I, J, L, T, Y) and 20 (B). Click a letter to hold it on the sign.</p>
+    </div>
+    <div class="font-grid" id="font"></div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>The box</h2>
+      <p class="muted">336 × 456 × 110 mm. The face covers the front edges of the walls, so from the front you see only black acrylic and bulbs. Everything you might need to service comes out the back.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Layer</th><th>Depth</th><th>Material</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Face</td><td class="n">6 mm</td><td>Black cast acrylic</td><td>35 × Ø24.6 mm holes on a 60 mm pitch. Socket mouths sit flush with its front.</td></tr>
+          <tr><td>Socket gap</td><td class="n">19 mm</td><td>3/4″ square wood cleats</td><td>Glued to the side walls. Their depth sets the sockets flush with the face, with no screws showing on the front.</td></tr>
+          <tr><td>Carrier</td><td class="n">6 mm</td><td>Cast acrylic</td><td>Socket flanges screw to its front with M3. Wires pass through an 8 mm hole under each socket. Screwed to the cleats from behind.</td></tr>
+          <tr><td>Electronics bay</td><td class="n">73 mm</td><td>—</td><td>SSR boards, controller, 5 V supply and terminal block on standoffs. 42 mm clear between the carrier and the tallest board.</td></tr>
+          <tr><td>Back</td><td class="n">6 mm</td><td>Plywood</td><td>Removable. Screws into the back edges of the walls. Carries all the electronics.</td></tr>
+          <tr><td>Walls</td><td class="n">98 mm</td><td>1/2″ wood</td><td>Frame. The bottom wall has a PG7 cable gland for the power cord.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="figure scroll">
+      <svg id="section" viewBox="0 0 560 640" role="img" aria-label="Side section through the top two bulbs, drawn to scale"></svg>
+    </div>
+    <p class="cap">Side section through the center column, top two bulbs, to scale (3 px per mm). Front is on the left. The cleats run down the side walls, so this cut doesn't pass through them. The SSR board sits beside the cut; its outline is dashed.</p>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>Electronics</h2>
+      <p class="muted">An ESP32-C3 is enough: three pins drive a chain of five shift registers, one per relay board. The relays switch the hot side of each socket. All sockets share one neutral.</p>
+    </div>
+    <div class="chain">
+      <div class="node"><span class="t">ESP32-C3</span><span class="d">Wi-Fi, patterns. Data, clock and latch pins, plus output enable.</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">5 × 74HCT595</span><span class="d">Daisy-chained, 40 outputs. HCT parts accept 3.3 V logic at 5 V.</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">5 × 8-ch SSR board</span><span class="d">G3MB-202P, 5 V input, 2 A per channel, zero-cross.</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">35 bulbs</span><span class="d">Bulb n is on board ⌊n ÷ 8⌋, channel n mod 8. 5 channels spare.</span></div>
+    </div>
+    <div class="chain">
+      <div class="node mains"><span class="t">120 V in</span><span class="d">Grounded cord through the PG7 gland, strain relieved.</span></div>
+      <span class="arrow">→</span>
+      <div class="node mains"><span class="t">Fuse + terminal block</span><span class="d">2 A fuse on the line. L to the SSR commons, N to every socket, PE to anything metal.</span></div>
+      <span class="arrow">→</span>
+      <div class="node"><span class="t">HLK-5M05</span><span class="d">120 V → 5 V 1 A. Powers the ESP32, shift registers and SSR inputs.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Parts</h2></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Qty</th><th>Part</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="n">35</td><td>120 V G40 E12 LED filament bulbs</td><td>38 on hand, so 3 spare</td></tr>
+          <tr><td class="n">35</td><td>E12 flanged sockets</td><td>Model assumes 24 mm body, 25 mm tall, 50 × 14 mm flange, holes 38 mm apart</td></tr>
+          <tr><td class="n">1</td><td>6 mm black cast acrylic</td><td>Face, 336 × 456 mm. Fits the xTool P2 bed</td></tr>
+          <tr><td class="n">1</td><td>6 mm cast acrylic</td><td>Carrier, 311 × 431 mm</td></tr>
+          <tr><td class="n">4</td><td>1/2″ wood, 98 mm wide</td><td>Sides 2 × 456 mm, top and bottom 2 × 312 mm</td></tr>
+          <tr><td class="n">2</td><td>3/4″ square cleat</td><td>432 mm long</td></tr>
+          <tr><td class="n">1</td><td>6 mm plywood</td><td>Back, 336 × 456 mm</td></tr>
+          <tr><td class="n">70</td><td>M3 screws and nuts</td><td>Socket flanges to carrier</td></tr>
+          <tr><td class="n">1</td><td>ESP32-C3 SuperMini</td><td></td></tr>
+          <tr><td class="n">5</td><td>74HCT595 + perfboard</td><td>One per relay board</td></tr>
+          <tr><td class="n">5</td><td>8-channel SSR board, 5 V</td><td>G3MB-202P or similar, 40 channels</td></tr>
+          <tr><td class="n">1</td><td>HLK-5M05 (5 V 1 A)</td><td>The 0.6 A HLK-PM01 is too small with all inputs on</td></tr>
+          <tr><td class="n">1</td><td>Fuse holder, 2 A fuse, terminal block</td><td>Mains entry</td></tr>
+          <tr><td class="n">1</td><td>PG7 cable gland + 3-wire cord</td><td>Bottom wall</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Before you build</h2></div>
+    <div class="notes">
+      <div class="note"><h3>Measure a socket</h3><p>The socket size is copied from the MakeSign project. Measure yours and update the socket values in <code>cad/marquee_matrix.py</code> before cutting acrylic.</p></div>
+      <div class="note"><h3>Test for ghosting</h3><p>Zero-cross SSRs leak about 1 mA when off, which can make LED bulbs glow faintly. Wire one bulb to one channel first. If it glows, add a 0.1 µF X2 capacitor in series with 1 kΩ across the socket, or switch to mechanical relay boards.</p></div>
+      <div class="note warn"><h3>Mains wiring</h3><p>Fuse the line, strain-relieve the cord, cover every exposed 120 V terminal, and keep mains and 5 V wiring on separate sides of the bay. Bad connections are the real fire risk.</p></div>
+      <div class="note"><h3>About acrylic and fire</h3><p>Acrylic burns about as readily as wood, and it melts and drips. It's a good choice for laser cutting, not for fire safety. LED filament bulbs run cool, so careful wiring matters far more than the panel material.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Files</h2><p class="muted">In the MarqueeMatrix project folder.</p></div>
+    <div class="files">
+      <div><code>font5x7.py</code><span class="muted">The A–Z glyphs used on this page</span></div>
+      <div><code>cad/marquee_matrix.py</code><span class="muted">Parametric build123d model; all dimensions at the top</span></div>
+      <div><code>cad/export.py</code><span class="muted">Writes the STEP file and laser cut files</span></div>
+      <div><code>out/marquee_matrix.step</code><span class="muted">Full assembly</span></div>
+      <div><code>out/cut/face.dxf · carrier.dxf</code><span class="muted">Laser cut files (SVG copies alongside)</span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const FONT = {"A":[".###.","#...#","#...#","#####","#...#","#...#","#...#"],"B":["####.","#...#","#...#","####.","#...#","#...#","####."],"C":[".###.","#...#","#....","#....","#....","#...#",".###."],"D":["###..","#..#.","#...#","#...#","#...#","#..#.","###.."],"E":["#####","#....","#....","####.","#....","#....","#####"],"F":["#####","#....","#....","####.","#....","#....","#...."],"G":[".###.","#...#","#....","#.###","#...#","#...#",".####"],"H":["#...#","#...#","#...#","#####","#...#","#...#","#...#"],"I":[".###.","..#..","..#..","..#..","..#..","..#..",".###."],"J":["..###","...#.","...#.","...#.","...#.","#..#.",".##.."],"K":["#...#","#..#.","#.#..","##...","#.#..","#..#.","#...#"],"L":["#....","#....","#....","#....","#....","#....","#####"],"M":["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#"],"N":["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#"],"O":[".###.","#...#","#...#","#...#","#...#","#...#",".###."],"P":["####.","#...#","#...#","####.","#....","#....","#...."],"Q":[".###.","#...#","#...#","#...#","#.#.#","#..#.",".##.#"],"R":["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],"S":[".####","#....","#....",".###.","....#","....#","####."],"T":["#####","..#..","..#..","..#..","..#..","..#..","..#.."],"U":["#...#","#...#","#...#","#...#","#...#","#...#",".###."],"V":["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],"W":["#...#","#...#","#...#","#.#.#","#.#.#","#.#.#",".#.#."],"X":["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#"],"Y":["#...#","#...#","#...#",".#.#.","..#..","..#..","..#.."],"Z":["#####","....#","...#.","..#..",".#...","#....","#####"]};
+const COLS = 5, ROWS = 7, PITCH = 60, EDGE = 48, W = 336, H = 456;
+const N = COLS * ROWS;
+
+// ---------- sign ----------
+const sign = document.getElementById("sign");
+const readout = document.getElementById("readout");
+const bulbs = [];
+for (let i = 0; i < N; i++) {
+  const r = Math.floor(i / COLS), c = i % COLS;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "bulb";
+  b.style.left = ((EDGE + c * PITCH) / W * 100) + "%";
+  b.style.top = ((EDGE + r * PITCH) / H * 100) + "%";
+  const info = `Bulb <b>${i}</b> · row ${r} col ${c} · SSR board ${Math.floor(i / 8)} ch ${i % 8}`;
+  b.setAttribute("aria-label", `Bulb ${i}, row ${r}, column ${c}`);
+  b.addEventListener("mouseenter", () => { readout.innerHTML = info; });
+  b.addEventListener("focus", () => { readout.innerHTML = info; });
+  b.addEventListener("click", () => {
+    stop();
+    setMode("manual");
+    b.classList.toggle("on");
+    stats("·");
+  });
+  sign.appendChild(b);
+  bulbs.push(b);
+}
+sign.addEventListener("mouseleave", () => { readout.textContent = "Hover a bulb to see its channel"; });
+
+function glyphBits(ch) {
+  const rows = FONT[ch];
+  const on = new Set();
+  if (!rows) return on;
+  rows.forEach((row, r) => [...row].forEach((px, c) => { if (px === "#") on.add(r * COLS + c); }));
+  return on;
+}
+function show(set) { bulbs.forEach((b, i) => b.classList.toggle("on", set.has(i))); }
+function stats(label) {
+  const lit = bulbs.filter(b => b.classList.contains("on")).length;
+  document.getElementById("s-letter").textContent = label;
+  document.getElementById("s-lit").textContent = lit;
+  document.getElementById("s-load").textContent = lit + " W";
+}
+
+// ---------- patterns ----------
+const wordInput = document.getElementById("word");
+const speed = document.getElementById("speed");
+let mode = "spell", timer = null, step = 0;
+
+const perimeter = (() => {
+  const p = [];
+  for (let c = 0; c < COLS; c++) p.push(c);
+  for (let r = 1; r < ROWS; r++) p.push(r * COLS + COLS - 1);
+  for (let c = COLS - 2; c >= 0; c--) p.push((ROWS - 1) * COLS + c);
+  for (let r = ROWS - 2; r >= 1; r--) p.push(r * COLS);
+  return p;
+})();
+
+function letters() {
+  const w = wordInput.value.toUpperCase().replace(/[^A-Z ]/g, "");
+  return w.length ? [...w] : ["A"];
+}
+function tick() {
+  if (mode === "spell") {
+    const seq = letters();
+    // letter, short gap, next letter; a longer gap at the end of the word
+    const slots = [];
+    seq.forEach(ch => { slots.push(ch, ""); });
+    slots.push("", "");
+    const ch = slots[step % slots.length];
+    show(ch ? glyphBits(ch) : new Set());
+    stats(ch && ch !== " " ? ch : "–");
+    step++;
+    const isGap = !ch;
+    timer = setTimeout(tick, isGap ? Math.max(120, speed.value * 0.3) : +speed.value);
+  } else if (mode === "chase") {
+    const on = new Set();
+    for (let i = 0; i < N; i++) if (i % 3 === step % 3) on.add(i);
+    show(on); stats("chase"); step++;
+    timer = setTimeout(tick, speed.value * 0.5);
+  } else if (mode === "border") {
+    const on = new Set();
+    for (let k = 0; k < 4; k++) on.add(perimeter[(step + k) % perimeter.length]);
+    show(on); stats("border"); step++;
+    timer = setTimeout(tick, speed.value * 0.18);
+  }
+}
+function stop() { clearTimeout(timer); timer = null; }
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+  document.querySelectorAll(".glyph").forEach(g => g.setAttribute("aria-pressed", "false"));
+}
+function start(m) {
+  stop(); setMode(m); step = 0;
+  if (m === "all") { show(new Set([...Array(N).keys()])); stats("all"); return; }
+  tick();
+}
+document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => start(b.dataset.mode)));
+wordInput.addEventListener("input", () => start("spell"));
+speed.addEventListener("input", () => { document.getElementById("speed-v").textContent = speed.value + " ms"; });
+
+// ---------- font sheet ----------
+const fontEl = document.getElementById("font");
+Object.keys(FONT).forEach(ch => {
+  const g = document.createElement("button");
+  g.type = "button"; g.className = "glyph"; g.setAttribute("aria-pressed", "false");
+  g.setAttribute("aria-label", `Show ${ch}`);
+  const mini = document.createElement("span"); mini.className = "mini";
+  const bits = glyphBits(ch);
+  for (let i = 0; i < N; i++) { const d = document.createElement("i"); if (bits.has(i)) d.className = "on"; mini.appendChild(d); }
+  const label = document.createElement("span"); label.textContent = `${ch} · ${bits.size}`;
+  g.append(mini, label);
+  g.addEventListener("click", () => {
+    stop(); setMode("manual");
+    g.setAttribute("aria-pressed", "true");
+    show(bits); stats(ch);
+  });
+  fontEl.appendChild(g);
+});
+
+// ---------- section drawing (to scale: 3 px/mm; z = 0 at the face front, +z toward the viewer) ----------
+(function drawSection() {
+  const svg = document.getElementById("section");
+  const S = 3, Z0 = 45, Y0 = 230, OX = 40, OY = 40;
+  const X = z => OX + (Z0 - z) * S;
+  const Y = y => OY + (Y0 - y) * S;
+  const YMIN = 62;            // crop below the second bulb
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, text) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    svg.appendChild(e); return e;
+  };
+  const rectZY = (z1, z2, y1, y2, cls, extra = {}) =>
+    el("rect", { x: X(Math.max(z1, z2)), y: Y(Math.max(y1, y2)), width: Math.abs(z1 - z2) * S, height: Math.abs(y1 - y2) * S, class: cls, ...extra });
+  // solid strip between z1..z2 from yTop down to YMIN, minus holes [yHi, yLo]
+  const strip = (z1, z2, yTop, holes, cls) => {
+    const cuts = holes.slice().sort((a, b) => b[0] - a[0]);
+    let y = yTop;
+    for (const [hi, lo] of cuts) { if (hi < y) rectZY(z1, z2, y, hi, cls); y = Math.min(y, lo); }
+    if (y > YMIN) rectZY(z1, z2, y, YMIN, cls);
+  };
+
+  const ROWS_Y = [180, 120];            // top two bulb rows, mm from centre
+  const IN_TOP = 456 / 2 - 12;          // 216
+  // walls and back
+  rectZY(-6, -104, 228, IN_TOP, "wood");
+  rectZY(-104, -110, 228, YMIN, "ply");
+  // face (black acrylic) with socket holes
+  strip(0, -6, 228, ROWS_Y.map(y => [y + 12.3, y - 12.3]), "acr");
+  // carrier (clear acrylic) with flange screw holes and wire holes
+  const ch = [];
+  ROWS_Y.forEach(y => ch.push([y + 19 + 1.7, y + 19 - 1.7], [y + 4, y - 4], [y - 19 + 1.7, y - 19 - 1.7]));
+  strip(-25, -31, IN_TOP - 0.5, ch, "acr-clear");
+  // sockets and bulbs
+  ROWS_Y.forEach(y => {
+    rectZY(-25, -21, y + 25, y - 25, "sock");                 // flange
+    rectZY(-25, 0, y + 12, y + 6.2, "sock");                  // body walls
+    rectZY(-25, 0, y - 6.2, y - 12, "sock");
+    rectZY(-25, -19, y + 6.2, y - 6.2, "sock");               // base
+    rectZY(-12, 3, y + 6, y - 6, "metal");                    // E12 screw base
+    el("circle", { cx: X(23), cy: Y(y), r: 20 * S, class: "glow" });
+  });
+  // SSR board envelope beside the cut (top row of boards)
+  rectZY(-73, -98, 191, 136, "env");
+
+  // labels with leaders
+  const label = (x, y, tx, ty, text, anchor = "start") => {
+    el("path", { d: `M${x},${y} L${tx},${ty}`, class: "lead" });
+    el("text", { x: tx + (anchor === "start" ? 4 : -4), y: ty + 4, "text-anchor": anchor }, text);
+  };
+  label(X(-3), Y(205), X(-3) - 10, Y(232) - 14, "Face · 6 black acrylic", "end");
+  label(X(-28), Y(90), X(-28) + 50, Y(90), "Carrier · 6 acrylic");
+  label(X(-12), Y(192), X(-40), Y(205), "E12 socket");
+  label(X(-55), Y(222), X(-55) + 30, Y(232) - 12, "Wall · 12 wood");
+  label(X(-85), Y(140), X(-85) - 10, Y(120), "SSR board", "end");
+  label(X(-107), Y(90), X(-107) - 20, Y(76), "Back · 6 ply", "end");
+  label(X(23) - 10, Y(120) + 50, X(23) - 10, Y(70), "G40 bulb", "middle");
+
+  // dimension chain along the bottom
+  const dy = Y(YMIN) + 26;
+  const marks = [0, -6, -25, -31, -104, -110];
+  marks.forEach(z => el("path", { d: `M${X(z)},${Y(YMIN) + 6} L${X(z)},${dy + 6}`, class: "dim" }));
+  el("path", { d: `M${X(0)},${dy} L${X(-110)},${dy}`, class: "dim" });
+  for (let k = 0; k < marks.length - 1; k++) {
+    const a = marks[k], b = marks[k + 1], mid = (X(a) + X(b)) / 2, len = a - b;
+    el("text", { x: mid, y: dy - 6 + (len < 10 ? (k % 2 ? 22 : 0) : 0), "text-anchor": "middle", class: "lbl-muted" }, String(len));
+  }
+  const ty = dy + 34;
+  el("path", { d: `M${X(0)},${ty} L${X(-110)},${ty}`, class: "dim" });
+  el("path", { d: `M${X(0)},${ty - 5} L${X(0)},${ty + 5} M${X(-110)},${ty - 5} L${X(-110)},${ty + 5}`, class: "dim" });
+  el("text", { x: (X(0) + X(-110)) / 2, y: ty + 18, "text-anchor": "middle" }, "110 mm overall");
+  el("path", { d: `M${X(43)},${ty} L${X(0)},${ty}`, class: "dim" });
+  el("path", { d: `M${X(43)},${ty - 5} L${X(43)},${ty + 5}`, class: "dim" });
+  el("text", { x: (X(43) + X(0)) / 2, y: ty + 18, "text-anchor": "middle", class: "lbl-muted" }, "43 bulb");
+})();
+
+start("spell");
+</script>
